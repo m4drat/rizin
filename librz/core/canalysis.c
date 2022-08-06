@@ -5761,7 +5761,17 @@ static bool is_in_data_section(RzCore *core, const ut64 address) {
 	}
 	RzBinObject *o = rz_bin_cur_object(core->bin);
 	const RzBinSection *section = o ? rz_bin_get_section_at(o, address, core->io->va) : NULL;
-	return section && section->vsize > 0 && strstr(section->name, "data");
+	if (!section || section->size < 2) {
+		return false;
+	}
+
+	if (strstr(section->name, "data")) {
+		// this ensures that the section will always be used if
+		// contains `data` substring regardless of their permissions.
+		return true;
+	}
+
+	return section->perm && !(section->perm & RZ_PERM_X);
 }
 
 /**
@@ -5770,8 +5780,10 @@ static bool is_in_data_section(RzCore *core, const ut64 address) {
  * \param      core  The RzCore to analyze
  */
 RZ_IPI void rz_core_analysis_resolve_pointers_to_data(RzCore *core) {
-	if (rz_str_startswith(rz_config_get(core->config, "asm.arch"), "dalvik")) {
-		// never run this for dalvik
+	const char *arch_name = rz_config_get(core->config, "asm.arch");
+	if (!strcmp(arch_name, "dalvik") || !strcmp(arch_name, "java")) {
+		// never run this for dalvik & java since both of them does not use pointers
+		// but instead they use IDs in the bin to resolve symbols, objects, types, etc..
 		return;
 	}
 
