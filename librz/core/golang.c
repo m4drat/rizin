@@ -531,7 +531,7 @@ static bool recover_string_at(GoStrRecover *ctx, ut64 str_addr, ut64 str_size) {
 		return false;
 	}
 
-	// do not remove any flag that a symbol.
+	// skip possible pointers that matches to symbols flags, because these are already handled.
 	RzFlagItem *fi = rz_flag_get_by_spaces(ctx->core->flags, str_addr, RZ_FLAGS_FS_SYMBOLS, NULL);
 	if (fi && !strncmp(fi->name, "sym.", 4)) {
 		return false;
@@ -1662,6 +1662,8 @@ static void core_recover_golang_strings_from_data_pointers(RzCore *core, GoStrRe
 				if (!string_addr || !string_size) {
 					continue;
 				} else if (word_size == sizeof(ut32) && string_addr == UT32_MAX) {
+					continue;
+				} else if (word_size == sizeof(ut64) && string_addr == UT64_MAX) {
 					continue;
 				}
 				if (recover_string_at(ctx, string_addr, string_size)) {
