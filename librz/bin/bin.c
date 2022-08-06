@@ -1122,6 +1122,21 @@ RZ_API void rz_bin_section_free(RzBinSection *bs) {
 }
 
 /**
+ * \brief      Checks whether the given section is a data section
+ *
+ * \param      section  The section to test
+ *
+ * \return     Returns false on error or if is not a data section, otherwise true
+ */
+RZ_API bool rz_bin_section_is_data(RZ_NONNULL RzBinSection *section) {
+	rz_return_val_if_fail(section, false);
+	if (section->name && strstr(section->name, "data")) {
+		return true;
+	}
+	return section->perm && !(section->perm & RZ_PERM_X);
+}
+
+/**
  * \brief Converts the RzBinSection type to the string representation
  *
  * Some binary formats have a function interface called "section_type_to_string"

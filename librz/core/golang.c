@@ -1637,7 +1637,7 @@ static void core_recover_golang_strings_from_data_pointers(RzCore *core, GoStrRe
 	}
 
 	rz_list_foreach (section_list, iter, section) {
-		if (section->vsize < (word_size * 2) || !strstr(section->name, "data")) {
+		if (section->vsize < (word_size * 2) || !rz_bin_section_is_data(section)) {
 			continue;
 		}
 
