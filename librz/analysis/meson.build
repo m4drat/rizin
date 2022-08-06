@@ -162,6 +162,7 @@ rz_analysis_sources = [
   'arch/arm/arm_il32.c',
   'arch/arm/arm_il64.c',
   'arch/sh/sh_il.c',
+  'arch/x86/x86_il.c',
   '../asm/arch/amd29k/amd29k.c',
   '../asm/arch/avr/disassembler.c',
   '../asm/arch/cil/cil_dis.c',
