@@ -17,7 +17,7 @@ EXPECT=<<EOF
 0x0063e49b str.version
 0x0063e4ac str.HTTP_version
 0x0063e566 str.
-14292
+14811
 EOF
 RUN
 
@@ -44,7 +44,7 @@ EXPECT=<<EOF
 ;-- str.flag:
 ;-- str.sort:
 ;-- str.sync:
-13492
+14028
 EOF
 RUN
 
@@ -67,7 +67,7 @@ EXPECT=<<EOF
 0x0065de6d str.version
 0x0065de8a str.HTTP_version
 0x0065dfe6 str.
-14338
+14889
 EOF
 RUN
 
@@ -129,7 +129,7 @@ EXPECT=<<EOF
 0x0027401c str.btcctl.conf
 0x00274090 str.rpc.cert
 0x00274104 str.rpc.cert
-14072
+14112
 EOF
 RUN
 
