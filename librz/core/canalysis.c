@@ -5765,7 +5765,7 @@ static bool is_in_data_section(RzCore *core, const ut64 address) {
 }
 
 /**
- * \brief      Tries to resolve all the constant pointers and adds flags named ptr.XXXXXX
+ * \brief      Tries to resolve all the constant pointers and adds flags named data.XXXXXX
  *
  * \param      core  The RzCore to analyze
  */
