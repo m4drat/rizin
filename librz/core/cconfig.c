@@ -2956,6 +2956,7 @@ RZ_API int rz_core_config_init(RzCore *core) {
 	SETDESC(n, "Select C++ ABI (Compiler)");
 	SETOPTIONS(n, "itanium", "msvc", NULL);
 	SETB("analysis.apply.signature", true, "enables/disables auto-applying signatures to the loaded binary (see also flirt.sigdb.path)");
+	SETB("analysis.resolve.pointers", true, "enables/disables analysis of pointers to data sections.");
 
 #if __linux__ && __GNU_LIBRARY__ && __GLIBC__ && __GLIBC_MINOR__
 	SETCB("dbg.malloc", "glibc", &cb_malloc, "Choose malloc structure parser");

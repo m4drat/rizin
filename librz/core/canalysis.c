@@ -5755,6 +5755,98 @@ RZ_IPI bool rz_core_analysis_var_rename(RzCore *core, const char *name, const ch
 	return true;
 }
 
+static bool is_in_data_section(RzCore *core, const ut64 address) {
+	if (address < 256 || address == UT64_MAX) {
+		return false;
+	}
+	RzBinObject *o = rz_bin_cur_object(core->bin);
+	const RzBinSection *section = o ? rz_bin_get_section_at(o, address, core->io->va) : NULL;
+	return section && section->vsize > 0 && strstr(section->name, "data");
+}
+
+/**
+ * \brief      Tries to resolve all the constant pointers and adds flags named ptr.XXXXXX
+ *
+ * \param      core  The RzCore to analyze
+ */
+RZ_IPI void rz_core_analysis_resolve_pointers_to_data(RzCore *core) {
+	if (rz_str_startswith(rz_config_get(core->config, "asm.arch"), "dalvik")) {
+		// never run this for dalvik
+		return;
+	}
+
+	RzListIter *it, *it2;
+	RzAnalysis *analysis = core->analysis;
+	RzAnalysisFunction *func = NULL;
+	RzAnalysisBlock *block = NULL;
+	ut64 pointer = 0;
+	ut8 *bytes = NULL;
+	void *archbits = NULL;
+	const ut32 pointer_size = analysis->bits / 8;
+	ut32 min_op_size = rz_analysis_archinfo(analysis, RZ_ANALYSIS_ARCHINFO_MIN_OP_SIZE);
+
+	// ignore any hint.
+	RZ_PTR_MOVE(archbits, analysis->coreb.archbits);
+
+	rz_list_foreach (analysis->fcns, it, func) {
+		if (rz_cons_is_breaked()) {
+			break;
+		}
+		rz_list_foreach (func->bbs, it2, block) {
+			if (block->size < 1) {
+				continue;
+			}
+
+			bytes = malloc(block->size);
+			if (!bytes) {
+				RZ_LOG_ERROR("Failed allocate basic block bytes buffer\n");
+				goto end;
+			} else if (0 > rz_io_nread_at(core->io, block->addr, bytes, block->size)) {
+				free(bytes);
+				RZ_LOG_ERROR("Failed to read function basic block at address %" PFMT64x "\n", block->addr);
+				goto end;
+			}
+
+			for (ut32 i = 0; i < block->size;) {
+				ut64 pc = block->addr + i;
+				RzAnalysisOp aop;
+				rz_analysis_op_init(&aop);
+				if (rz_analysis_op(core->analysis, &aop, pc, bytes + i, (block->size - i), RZ_ANALYSIS_OP_MASK_DISASM) < 1) {
+					rz_analysis_op_fini(&aop);
+					i += min_op_size;
+					continue;
+				}
+				i += aop.size;
+				pointer = aop.ptr;
+				rz_analysis_op_fini(&aop);
+
+				if (pointer == pc ||
+					!is_in_data_section(core, pointer) ||
+					rz_flag_get_list(core->flags, pointer)) {
+					continue;
+				}
+
+				char *flagname = rz_str_newf("data.%08" PFMT64x, pointer);
+				if (!flagname) {
+					RZ_LOG_ERROR("Failed allocate flag name buffer for pointer to data\n");
+					free(bytes);
+					goto end;
+				}
+
+				rz_flag_space_push(core->flags, RZ_FLAGS_FS_POINTERS);
+				rz_flag_set(core->flags, flagname, pointer, pointer_size);
+				rz_flag_space_pop(core->flags);
+				free(flagname);
+				rz_analysis_xrefs_set(analysis, pc, pointer, RZ_ANALYSIS_XREF_TYPE_DATA);
+			}
+			free(bytes);
+		}
+	}
+
+end:
+	analysis->coreb.archbits = archbits;
+}
+
 static bool is_unknown_file(RzCore *core) {
 	if (core->bin->cur && core->bin->cur->o) {
 		return (rz_list_empty(core->bin->cur->o->sections));
@@ -5937,6 +6029,14 @@ RZ_API bool rz_core_analysis_everything(RzCore *core, bool experimental, char *d
 		rz_core_notify_begin(core, "%s", notify);
 		rz_analysis_dwarf_integrate_functions(core->analysis, core->flags, dwarf_sdb);
 		rz_core_notify_done(core, "%s", notify);
+	}
+
+	if (rz_config_get_b(core->config, "analysis.resolve.pointers")) {
+		notify = "Resolve pointers to data sections";
+		rz_core_notify_begin(core, "%s", notify);
+		rz_core_analysis_resolve_pointers_to_data(core);
+		rz_core_notify_done(core, "%s", notify);
+		rz_core_task_yield(&core->tasks);
 	}
 
 	if (experimental) {

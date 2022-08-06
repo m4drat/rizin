@@ -448,16 +448,20 @@ RZ_API void rz_analysis_purge(RzAnalysis *analysis) {
 
 RZ_API int rz_analysis_archinfo(RzAnalysis *analysis, int query) {
 	rz_return_val_if_fail(analysis, -1);
+	int value = -1;
 	switch (query) {
 	case RZ_ANALYSIS_ARCHINFO_MIN_OP_SIZE:
 	case RZ_ANALYSIS_ARCHINFO_MAX_OP_SIZE:
 	case RZ_ANALYSIS_ARCHINFO_ALIGN:
 		if (analysis->cur && analysis->cur->archinfo) {
-			return analysis->cur->archinfo(analysis, query);
+			value = analysis->cur->archinfo(analysis, query);
 		}
 		break;
 	}
-	return -1;
+	if (query == RZ_ANALYSIS_ARCHINFO_MIN_OP_SIZE && value < 1) {
+		return 1;
+	}
+	return value;
 }
 
 #define K_NORET_ADDR(x) sdb_fmt("addr.%" PFMT64x ".noreturn", x)
