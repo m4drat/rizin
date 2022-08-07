@@ -1133,7 +1133,17 @@ RZ_API bool rz_bin_section_is_data(RZ_NONNULL RzBinSection *section) {
 	if (section->name && strstr(section->name, "data")) {
 		return true;
 	}
-	return section->perm && !(section->perm & RZ_PERM_X);
+	ut32 permissions = section->perm & RZ_PERM_RWX;
+	switch (permissions) {
+	case RZ_PERM_R:
+		/* fall-thru */
+	case RZ_PERM_RX:
+		/* fall-thru */
+	case RZ_PERM_RW:
+		return true;
+	default:
+		return false;
+	}
 }
 
 /**
