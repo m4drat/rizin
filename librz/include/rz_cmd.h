@@ -594,15 +594,12 @@ RZ_API void rz_cmd_state_output_print(RZ_NONNULL RzCmdStateOutput *state);
 #define rz_cmd_parsed_args_foreach_arg(args, i, arg) for ((i) = 1; (i) < (args->argc) && ((arg) = (args)->argv[i]); (i)++)
 
 /* rz_cmd_macro */
-RZ_API RzCmdMacroItem *rz_cmd_macro_item_new(void);
-RZ_API void rz_cmd_macro_item_free(RzCmdMacroItem *item);
-RZ_API void rz_cmd_macro_init(RzCmdMacro *mac);
-RZ_API int rz_cmd_macro_add(RzCmdMacro *mac, const char *name);
-RZ_API int rz_cmd_macro_rm(RzCmdMacro *mac, const char *_name);
-RZ_API void rz_cmd_macro_list(RzCmdMacro *mac);
-RZ_API void rz_cmd_macro_meta(RzCmdMacro *mac);
-RZ_API int rz_cmd_macro_call(RzCmdMacro *mac, const char *name);
-RZ_API int rz_cmd_macro_call_multiple(RzCmdMacro *mac, const char *name);
+RZ_API bool rz_cmd_macro_add(RZ_NONNULL RzCmd *cmd, RZ_NONNULL const char *name, const char **args, const char *code);
+RZ_API bool rz_cmd_macro_rm(RZ_NONNULL RzCmd *cmd, const char *name);
+RZ_API RzCmdMacro *rz_cmd_macro_get(RZ_NONNULL RzCmd *cmd, const char *name);
+RZ_API RZ_OWN RzList /*<RzCmdMacro>*/ *rz_cmd_macro_list(RZ_NONNULL RzCmd *cmd);
+RZ_API RzCmdStatus rz_cmd_macro_call(RZ_NONNULL RzCmd *cmd, const char *name, const char **argv);
+RZ_API RzCmdStatus rz_cmd_macro_call_multiple(RZ_NONNULL RzCmd *cmd, const char *name, const char **argv);
 
 RZ_API bool rz_cmd_alias_del(RzCmd *cmd, const char *k);
 RZ_API char **rz_cmd_alias_keys(RzCmd *cmd, int *sz);

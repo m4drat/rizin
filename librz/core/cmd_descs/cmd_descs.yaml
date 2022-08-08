@@ -112,7 +112,6 @@ commands:
   - name: (
     cname: cmd_macro
     summary: Manage scripting macros
-    type: RZ_CMD_DESC_TYPE_OLDINPUT
   - name: "*"
     cname: pointer
     summary: Pointer read/write data/values
